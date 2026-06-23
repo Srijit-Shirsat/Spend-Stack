@@ -1,4 +1,12 @@
+import { useState } from "react";
+
+import SignupModal from "./SignupModal";
+import LoginModal from "./LoginModal";
+
 function Hero() {
+  const [showSignup, setShowSignup] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+
   return (
     <section className="h-full bg-gradient-to-br from-zinc-900 via-neutral-800 to-zinc-700 flex items-center justify-center px-6">
 
@@ -23,37 +31,36 @@ function Hero() {
 
           <div className="flex justify-center gap-5">
 
-            <button className="px-8 py-3 rounded-xl bg-white text-zinc-900 font-semibold hover:scale-105 transition duration-300 shadow-lg">
+            <button
+              onClick={() => setShowSignup(true)}
+              className="px-8 py-3 rounded-xl bg-white text-zinc-900 font-semibold hover:scale-105 transition duration-300 shadow-lg"
+            >
               Sign Up
             </button>
 
-            <button className="px-8 py-3 rounded-xl border border-zinc-400 text-white font-semibold hover:bg-zinc-700 transition duration-300">
+            <button
+              onClick={() => setShowLogin(true)}
+              className="px-8 py-3 rounded-xl border border-zinc-400 text-white font-semibold hover:bg-zinc-700 transition duration-300"
+            >
               Login
             </button>
 
           </div>
 
-          <div className="mt-16 flex justify-center gap-12 flex-wrap">
-
-            <div>
-              <h2 className="text-3xl font-bold text-white">10K+</h2>
-              <p className="text-zinc-400">Expenses Tracked</p>
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-bold text-white">5K+</h2>
-              <p className="text-zinc-400">Active Users</p>
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-bold text-white">99.9%</h2>
-              <p className="text-zinc-400">Data Reliability</p>
-            </div>
-
-          </div>
-
         </div>
       </div>
+
+      <SignupModal
+        isOpen={showSignup}
+        onClose={() => setShowSignup(false)}
+        openLogin={() => setShowLogin(true)}
+      />
+
+      <LoginModal
+        isOpen={showLogin}
+        onClose={() => setShowLogin(false)}
+        openSignup={() => setShowSignup(true)}
+      />
 
     </section>
   );
