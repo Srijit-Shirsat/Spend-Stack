@@ -1,10 +1,9 @@
 function Hero() {
   return (
-    <section className="min-h-[90vh] bg-gradient-to-br from-zinc-900 via-neutral-800 to-zinc-700 flex items-center justify-center px-6">
+    <section className="h-full bg-gradient-to-br from-zinc-900 via-neutral-800 to-zinc-700 flex items-center justify-center px-6">
 
       <div className="text-center max-w-4xl relative">
 
-        {/* Glow Effect */}
         <div className="absolute inset-0 blur-3xl bg-zinc-500/10 rounded-full"></div>
 
         <div className="relative z-10">
@@ -33,8 +32,6 @@ function Hero() {
             </button>
 
           </div>
-
-          {/* Stats Section */}
 
           <div className="mt-16 flex justify-center gap-12 flex-wrap">
 
