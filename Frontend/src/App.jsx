@@ -1,18 +1,31 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Footer from "./components/Footer";
+import { Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Expenses from "./layout/Expense";
+import Analytics from "./layout/Analytics";
+import Settings from "./layout/Settings";
+import DashboardLayout from "./layout/DashboardLayout";
 
 function App() {
   return (
-    <div className="h-screen flex flex-col">
-      <Navbar />
+    <Routes>
 
-      <main className="flex-1">
-        <Hero />
-      </main>
+      <Route path="/" element={<Home />} />
 
-      <Footer />
-    </div>
+      <Route element={<DashboardLayout />}>
+
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route path="/expenses" element={<Expenses />} />
+
+        <Route path="/analytics" element={<Analytics />} />
+
+        <Route path="/settings" element={<Settings />} />
+
+      </Route>
+
+    </Routes>
   );
 }
 
