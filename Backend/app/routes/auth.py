@@ -14,6 +14,7 @@ from app.models.user import User
 from app.schemas.user import UserLogin
 from app.core.auth import get_current_user
 from fastapi import Header
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(
     prefix="/auth",
@@ -53,31 +54,25 @@ def signup(
 
 @router.post("/login")
 def login(
-    user_data: UserLogin,
-    db: Session = Depends(get_db)):
-
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
     user = db.query(User).filter(
-        User.email == user_data.email
+        User.email == form_data.username
     ).first()
 
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials"
-        )
-
-    if not verify_password(
-        user_data.password,
-        user.hashed_password #type: ignore[reportcallissue]
+    if not user or not verify_password(
+        form_data.password,
+        user.hashed_password #type: ignore[reportCallIssue]
     ):
         raise HTTPException(
             status_code=401,
-            detail="Invalid credentials"
+            detail="Invalid email or password"
         )
 
     access_token = create_access_token(
-        data={"sub": str(user.id)}
-    )
+    data={"sub": str(user.id)}
+)
 
     return {
         "access_token": access_token,

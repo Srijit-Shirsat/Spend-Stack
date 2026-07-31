@@ -8,6 +8,7 @@ from app.models.expense import Expense
 from app.models.budget import Budget
 from app.models.expense import Expense
 from app.routes import expense
+from app.routes import dashboard
 
 
 Base.metadata.create_all(bind=engine)
@@ -17,6 +18,7 @@ app = FastAPI()
 app.include_router(auth_router)
 app.include_router(category_router)
 app.include_router(expense.router)
+app.include_router(dashboard.router)
 
 @app.get("/")
 def root():
