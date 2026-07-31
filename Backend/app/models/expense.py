@@ -9,6 +9,7 @@ from sqlalchemy import (
     Text
 )
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -45,12 +46,22 @@ class Expense(Base):
         nullable=False
     )
 
-    notes = Column(
-        Text,
+    description = Column(
+        String(255),
         nullable=True
     )
 
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+    
+    user = relationship(
+        "User",
+        back_populates="expenses"
+    )
+
+    category = relationship(
+        "Category",
+        back_populates="expenses"
     )

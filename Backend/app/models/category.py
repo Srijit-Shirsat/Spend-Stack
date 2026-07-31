@@ -34,3 +34,9 @@ class Category(Base):
         "User",
         back_populates="categories"
     )
+    
+    expenses = relationship(
+    "Expense",
+    back_populates="category",
+    cascade="all, delete-orphan"
+    )
