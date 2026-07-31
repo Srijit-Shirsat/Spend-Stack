@@ -43,3 +43,81 @@ def get_expenses(
         .all()
     )
     
+@router.get("/{expense_id}", response_model=ExpenseResponse)
+def get_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    expense = (
+        db.query(Expense)
+        .filter(
+            Expense.id == expense_id,
+            Expense.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    return expense
+
+@router.put("/{expense_id}", response_model=ExpenseResponse)
+def update_expense(
+    expense_id: int,
+    request: ExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    expense = (
+        db.query(Expense)
+        .filter(
+            Expense.id == expense_id,
+            Expense.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    if request.category_id is not None:
+        expense.category_id = request.category_id #type: ignore[reportCallIssue]
+
+    if request.amount is not None:
+        expense.amount = request.amount #type: ignore[reportCallIssue]
+
+    if request.description is not None:
+        expense.description = request.description #type: ignore[reportCallIssue]
+
+    if request.expense_date is not None:
+        expense.expense_date = request.expense_date #type: ignore[reportCallIssue]
+
+    db.commit()
+    db.refresh(expense)
+
+    return expense
+    
+@router.delete("/{expense_id}")
+def delete_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    expense = (
+        db.query(Expense)
+        .filter(
+            Expense.id == expense_id,
+            Expense.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    db.delete(expense)
+    db.commit()
+
+    return {"message": "Expense deleted successfully"}
