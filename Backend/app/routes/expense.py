@@ -21,8 +21,9 @@ def create_expense(
     expense = Expense(
         user_id=current_user.id,
         category_id=request.category_id,
+        title=request.title,
         amount=request.amount,
-        description=request.description,
+        notes=request.notes,
         expense_date=request.expense_date
     )
 
@@ -88,8 +89,8 @@ def update_expense(
     if request.amount is not None:
         expense.amount = request.amount #type: ignore[reportCallIssue]
 
-    if request.description is not None:
-        expense.description = request.description #type: ignore[reportCallIssue]
+    if request.notes is not None:
+        expense.notes = request.notes #type: ignore[reportCallIssue]
 
     if request.expense_date is not None:
         expense.expense_date = request.expense_date #type: ignore[reportCallIssue]

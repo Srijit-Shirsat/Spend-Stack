@@ -46,7 +46,7 @@ class Expense(Base):
         nullable=False
     )
 
-    description = Column(
+    notes = Column(
         String(255),
         nullable=True
     )
