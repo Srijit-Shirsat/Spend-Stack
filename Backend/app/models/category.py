@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
@@ -9,18 +9,18 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(
+    user_id=Column(
         Integer,
         ForeignKey("users.id"),
         nullable=False
     )
 
-    name = Column(
+    name=Column(
         String(100),
         nullable=False
     )
 
-    color = Column(
+    color=Column(
         String(50),
         nullable=True
     )
@@ -28,4 +28,15 @@ class Category(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+    
+    user = relationship(
+        "User",
+        back_populates="categories"
+    )
+    
+    expenses = relationship(
+    "Expense",
+    back_populates="category",
+    cascade="all, delete-orphan"
     )

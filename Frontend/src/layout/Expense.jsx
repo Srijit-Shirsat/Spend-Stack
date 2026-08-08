@@ -1,4 +1,21 @@
+import { useEffect } from "react";
+import { getExpenses } from "../api/expense";
+
+
 function Expenses() {
+  useEffect(() => {
+  const fetchExpenses = async () => {
+    try {
+      const data = await getExpenses();
+      console.log("Expenses:", data);
+    } catch (error) {
+      console.error("Failed to fetch expenses:", error);
+    }
+  };
+
+  fetchExpenses();
+}, []);
+
   return (
     <>
       <h1 className="text-4xl font-bold text-white mb-6">

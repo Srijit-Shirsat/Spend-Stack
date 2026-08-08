@@ -1,3 +1,2 @@
-from app.core.security import hash_password
-
-print(hash_password("jay123"))
+import secrets
+print(secrets.token_hex(32))
