@@ -1,9 +1,46 @@
-function LoginModal({
-  isOpen,
-  onClose,
-  openSignup,
-}) {
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login } from "../api/auth";
+
+function LoginModal({isOpen, onClose, openSignup,}) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    console.log("LOGIN BUTTON CLICKED");
+
+    try {
+      const data = await login({
+        username,
+        password,
+      });
+
+      console.log("Login successful:", data);
+
+      localStorage.setItem("access_token", data.access_token);
+
+      alert("Login successful!");
+
+      setUsername("");
+      setPassword("");
+
+      onClose();
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+
+      alert(
+        error.response?.data?.detail ||
+        "Login failed. Please check your credentials."
+      );
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -25,17 +62,21 @@ function LoginModal({
           Login to continue using SpendStack.
         </p>
 
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
 
           <input
             type="email"
             placeholder="Email"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white outline-none focus:border-zinc-500"
           />
 
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-white outline-none focus:border-zinc-500"
           />
 
