@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getExpenses, createExpense } from "../api/expense";
+import {
+  getExpenses,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from "../api/expense";
 import { getCategories, createCategory } from "../api/category";
 
 
@@ -11,11 +16,17 @@ function Expenses() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [categoryName, setCategoryName] = useState("");
-  const [categoryColor, setCategoryColor] = useState("#14b8a6");
+  const [categoryColor, setCategoryColor] = useState("#282828");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [expenseDate, setExpenseDate] = useState("");
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editExpenseDate, setEditExpenseDate] = useState("");
   useEffect(() => {
   const fetchExpenses = async () => {
     try {
@@ -95,6 +106,36 @@ const filteredExpenses =
     : expenses.filter(
         (expense) => expense.category_id === Number(selectedCategory)
       );
+
+const handleUpdateExpense = async (e) => {
+  e.preventDefault();
+
+  try {
+    const updatedExpense = await updateExpense(
+      editingExpense.id,
+      {
+        category_id: Number(editCategoryId),
+        title: editTitle,
+        amount: Number(editAmount),
+        notes: editNotes,
+        expense_date: editExpenseDate,
+      }
+    );
+
+    setExpenses((prev) =>
+      prev.map((expense) =>
+        expense.id === updatedExpense.id
+          ? updatedExpense
+          : expense
+      )
+    );
+
+    setEditingExpense(null);
+
+  } catch (error) {
+    console.error("Failed to update expense:", error);
+  }
+};
 
   return (
     <>
@@ -238,6 +279,80 @@ const filteredExpenses =
         </form>
       )}
 
+        {editingExpense && (
+          <form
+            onSubmit={handleUpdateExpense}
+            className="mb-6 space-y-4 bg-zinc-800 rounded-xl p-5">
+            <select
+              value={editCategoryId}
+              onChange={(e) => setEditCategoryId(e.target.value)}
+              required
+              className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+            >
+              <option value="">Select Category</option>
+
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              placeholder="Title"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              required
+              className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+            />
+
+            <input
+              type="number"
+              placeholder="Amount"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              required
+              className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+            />
+
+            <input
+              type="text"
+              placeholder="Notes"
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+            />
+
+            <input
+              type="date"
+              value={editExpenseDate}
+              onChange={(e) => setEditExpenseDate(e.target.value)}
+              required
+              className="w-full p-3 rounded-lg bg-zinc-900 text-white"
+            />
+
+            <div className="flex gap-3">
+
+              <button
+                type="submit"
+                className="bg-teal-600 px-4 py-3 rounded-xl text-white"
+              >
+                Update Expense
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                className="bg-zinc-700 px-4 py-3 rounded-xl text-white"
+              >
+                Cancel
+              </button>
+
+            </div>
+          </form>
+        )}
+
         <table className="w-full text-white">
           <thead>
             <tr className="border-b border-zinc-700">
@@ -246,11 +361,23 @@ const filteredExpenses =
               <th className="pb-4 text-zinc-400 text-left">Amount</th>
               <th className="pb-4 text-zinc-400 text-left">Date</th>
               <th className="pb-4 text-zinc-400 text-left">Notes</th>
+              <th className="pb-4 text-zinc-400 text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredExpenses.map((expense) => (
+            {filteredExpenses.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="py-12 text-center text-zinc-500">
+                  {selectedCategory === "all"
+                    ? "No expenses yet. Add your first expense."
+                    : "No expenses in this category yet."}
+                </td>
+              </tr>
+          ) : (
+            filteredExpenses.map((expense) => (
               <tr
                 key={expense.id}
                 className="border-b border-zinc-800"
@@ -275,8 +402,39 @@ const filteredExpenses =
                 <td className="py-4 text-zinc-400">
                   {expense.notes || "—"}
                 </td>
+
+                <td className="py-4">
+                  <div className="flex gap-3">
+                    <button 
+                    onClick={() => {
+                      setEditingExpense(expense);
+                      setEditCategoryId(String(expense.category_id));
+                      setEditTitle(expense.title);
+                      setEditAmount(String(expense.amount));
+                      setEditNotes(expense.notes || "");
+                      setEditExpenseDate(expense.expense_date);
+                    }}
+                    className="text-teal-400 hover:text-teal-300">
+                      Edit
+                    </button>
+        
+                    <button 
+                    onClick={async () => {
+                      try {
+                         await deleteExpense(expense.id);
+                         setExpenses((prev) => prev.filter((item) => item.id !== expense.id));
+                      } catch (error) {
+                        console.error("Failed to delete expense:", error);
+                      }
+                    }}
+                    className="text-red-400 hover:text-red-300">
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
 
