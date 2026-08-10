@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class BudgetCreate(BaseModel):
-    monthly_budget: float = Field(gt=0)
+    monthly_budget: float = Field(ge=0)
     month: int = Field(ge=1, le=12)
     year: int = Field(ge=2000)
 

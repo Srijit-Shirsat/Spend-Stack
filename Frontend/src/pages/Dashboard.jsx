@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { getExpenses } from "../api/expense";
+import { getBudgets, createBudget, updateBudget } from "../api/budget";
+import { getCategories } from "../api/category";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState("");
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
   useEffect(() => {
   const fetchExpenses = async () => {
     try {
@@ -13,13 +20,110 @@ function Dashboard() {
     }
   };
 
+  const fetchBudgets = async () => {
+    try {
+      const data = await getBudgets();
+      setBudgets(data);
+    } catch (error) {
+      console.error("Failed to fetch budgets:", error);
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch dashboard categories:", error);
+    }
+  };
+
   fetchExpenses();
+  fetchBudgets();
+  fetchCategories();
 }, []);
 
   const totalExpenses = expenses.reduce(
     (total, expense) => total + Number(expense.amount),
     0
   );
+
+  const currentDate = new Date();
+
+  const currentBudget = budgets.find(
+    (budget) =>
+      budget.month === currentDate.getMonth() + 1 &&
+      budget.year === currentDate.getFullYear()
+  );
+
+  const monthlyBudget = currentBudget
+    ? Number(currentBudget.monthly_budget)
+    : 0;
+
+  const remainingBudget = monthlyBudget - totalExpenses;
+
+  const budgetUsed =
+  monthlyBudget > 0
+    ? Math.round((totalExpenses / monthlyBudget) * 100)
+    : 0;
+
+  const handleCreateBudget = async (e) => {
+  e.preventDefault();
+
+  const currentDate = new Date();
+
+  try {
+    const newBudget = await createBudget({
+      monthly_budget: Number(budgetAmount),
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear(),
+    });
+
+    setBudgets((prev) => [...prev, newBudget]);
+    setBudgetAmount("");
+    setShowBudgetForm(false);
+  } catch (error) {
+    console.error("Failed to create budget:", error);
+
+    alert(
+      error.response?.data?.detail ||
+      "Failed to create budget."
+    );
+  }
+};
+
+const handleUpdateBudget = async (e) => {
+  e.preventDefault();
+
+  const currentDate = new Date();
+
+  try {
+    const updatedBudget = await updateBudget(currentBudget.id, {
+      monthly_budget: Number(budgetAmount),
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear(),
+    });
+
+    setBudgets((prev) =>
+      prev.map((budget) =>
+        budget.id === updatedBudget.id ? updatedBudget : budget
+      )
+    );
+
+    setBudgetAmount("");
+    setShowBudgetForm(false);
+    setIsEditingBudget(false);
+  } catch (error) {
+    console.error("Failed to update budget:", error);
+
+    alert(
+      error.response?.data?.detail
+        ? JSON.stringify(error.response.data.detail, null, 2)
+        : "Failed to update budget."
+    );
+  }
+};
+
   return (
     <>
       <div className="flex justify-between items-center mb-8">
@@ -33,11 +137,6 @@ function Dashboard() {
             Welcome back, Srijit 👋
           </p>
         </div>
-
-        <button className="px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold">
-          + Add Expense
-        </button>
-
       </div>
 
       {/* Summary Cards */}
@@ -60,79 +159,85 @@ function Dashboard() {
           </p>
 
           <h2 className="text-4xl font-bold text-white mt-2">
-            ₹20,000
+            ₹{monthlyBudget}
           </h2>
+
+          <button
+             onClick={() => {
+                if (currentBudget) {
+                  setBudgetAmount(currentBudget.monthly_budget);
+                  setIsEditingBudget(true);
+                } else {
+                  setBudgetAmount("");
+                  setIsEditingBudget(false);
+                }
+
+                setShowBudgetForm(true);
+              }}
+              className="mt-4 text-teal-400 hover:text-teal-300 text-sm">
+              {currentBudget ? "✎ Change Budget" : "+ Add Monthly Budget"}
+          </button>
         </div>
+
+        {showBudgetForm && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <form
+              onSubmit={isEditingBudget ? handleUpdateBudget : handleCreateBudget}
+              className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md">
+              <h2 className="text-2xl font-bold text-white mb-5">
+                {isEditingBudget ? "Change Monthly Budget" : "Set Monthly Budget"}
+              </h2>
+
+              <input
+                type="number"
+                placeholder="Monthly budget"
+                value={budgetAmount}
+                onChange={(e) => setBudgetAmount(e.target.value)}
+                required
+                min="0"
+                className="w-full p-3 rounded-lg bg-zinc-800 text-white"/>
+
+              <div className="flex gap-3 mt-5">
+                <button
+                  type="submit"
+                  className="bg-teal-600 px-5 py-3 rounded-xl text-white"
+                >
+                  {isEditingBudget ? "Update Budget" : "Save Budget"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowBudgetForm(false)}
+                  className="bg-zinc-700 px-5 py-3 rounded-xl text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-700 rounded-2xl p-6">
           <p className="text-zinc-400">
-            Savings
+            Remaining budget
           </p>
 
           <h2 className="text-4xl font-bold text-green-400 mt-2">
-            ₹8,200
+            ₹{remainingBudget}
           </h2>
         </div>
 
         <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-700 rounded-2xl p-6">
           <p className="text-zinc-400">
-            Balance
+            Budget used (%)
           </p>
 
           <h2 className="text-4xl font-bold text-orange-400 mt-2">
-            ₹7,500
+            {budgetUsed}%
           </h2>
         </div>
 
       </div>
-
-      {/* Charts */}
-
-      <div className="grid grid-cols-2 gap-6 mb-8">
-
-        <div className="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-6">
-
-          <div className="flex justify-between mb-4">
-
-            <h2 className="text-white font-semibold text-xl">
-              Expense Trend
-            </h2>
-
-            <span className="text-zinc-500">
-              Last 30 Days
-            </span>
-
-          </div>
-
-          <div className="h-56 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-500">
-            📈 Expense Chart
-          </div>
-
-        </div>
-
-        <div className="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-6">
-
-          <div className="flex justify-between mb-4">
-
-            <h2 className="text-white font-semibold text-xl">
-              Categories
-            </h2>
-
-            <span className="text-zinc-500">
-              Monthly
-            </span>
-
-          </div>
-
-          <div className="h-56 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-500">
-            🥧 Pie Chart
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Recent Expenses */}
 
       <div className="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-6">
 
@@ -175,67 +280,47 @@ function Dashboard() {
           </thead>
 
           <tbody>
+            {expenses.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="py-8 text-center text-zinc-500">
+                    No expenses yet.
+                </td>
+              </tr>
+            ) : (
+              [...expenses]
+                .sort(
+                  (a, b) =>
+                    new Date(b.expense_date) -
+                    new Date(a.expense_date)
+                )
+                .slice(0, 5)
+                .map((expense) => (
+                  <tr
+                    key={expense.id}
+                    className="border-b border-zinc-800">
+                    <td className="py-4 text-white">
+                      {categories.find(
+                        (category) =>
+                          category.id === expense.category_id
+                      )?.name || "Unknown"}
+                    </td>
 
-            <tr className="border-b border-zinc-800">
+                    <td className="py-4 text-white">
+                      ₹{expense.amount}
+                    </td>
 
-              <td className="py-4 text-white">
-                🍔 Food
-              </td>
+                    <td className="py-4 text-zinc-400">
+                      {expense.expense_date}
+                    </td>
 
-              <td className="py-4 text-white">
-                ₹350
-              </td>
-
-              <td className="py-4 text-zinc-400">
-                23 Jun
-              </td>
-
-              <td className="py-4 text-green-400">
-                Completed
-              </td>
-
-            </tr>
-
-            <tr className="border-b border-zinc-800">
-
-              <td className="py-4 text-white">
-                🚗 Travel
-              </td>
-
-              <td className="py-4 text-white">
-                ₹800
-              </td>
-
-              <td className="py-4 text-zinc-400">
-                22 Jun
-              </td>
-
-              <td className="py-4 text-green-400">
-                Completed
-              </td>
-
-            </tr>
-
-            <tr>
-
-              <td className="py-4 text-white">
-                🛒 Shopping
-              </td>
-
-              <td className="py-4 text-white">
-                ₹1500
-              </td>
-
-              <td className="py-4 text-zinc-400">
-                20 Jun
-              </td>
-
-              <td className="py-4 text-yellow-400">
-                Pending
-              </td>
-
-            </tr>
-
+                    <td className="py-4 text-green-400">
+                      Completed
+                    </td>
+                  </tr>
+              ))
+            )}
           </tbody>
 
         </table>

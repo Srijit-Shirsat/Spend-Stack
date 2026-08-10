@@ -24,10 +24,6 @@ function Navbar() {
           </a>
 
           <a href="#" className="text-zinc-300 hover:text-teal-400 transition">
-            Analytics
-          </a>
-
-          <a href="#" className="text-zinc-300 hover:text-teal-400 transition">
             About Us
           </a>
         </div>
