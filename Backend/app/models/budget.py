@@ -6,7 +6,7 @@ from sqlalchemy import (
     DateTime
 )
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
@@ -39,4 +39,9 @@ class Budget(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+    
+    user = relationship(
+    "User",
+    back_populates="budgets"
     )

@@ -1,8 +1,27 @@
+import { useEffect, useState } from "react";
+import { getExpenses } from "../api/expense";
+
 function Dashboard() {
+  const [expenses, setExpenses] = useState([]);
+  useEffect(() => {
+  const fetchExpenses = async () => {
+    try {
+      const data = await getExpenses();
+      setExpenses(data);
+    } catch (error) {
+      console.error("Failed to fetch dashboard expenses:", error);
+    }
+  };
+
+  fetchExpenses();
+}, []);
+
+  const totalExpenses = expenses.reduce(
+    (total, expense) => total + Number(expense.amount),
+    0
+  );
   return (
     <>
-      {/* Header */}
-
       <div className="flex justify-between items-center mb-8">
 
         <div>
@@ -31,7 +50,7 @@ function Dashboard() {
           </p>
 
           <h2 className="text-4xl font-bold text-teal-400 mt-2">
-            ₹12,500
+            ₹{totalExpenses}
           </h2>
         </div>
 
