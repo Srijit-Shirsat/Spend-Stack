@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.models.category import Category
 from app.core.dependencies import get_db
 from app.core.auth import get_current_user
 from app.models.user import User
@@ -18,6 +18,16 @@ def create_expense(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    category = db.query(Category).filter(
+    Category.id == request.category_id,
+    Category.user_id == current_user.id
+).first()
+
+    if not category:
+        raise HTTPException(
+        status_code=404,
+        detail="Category not found"
+    )
     expense = Expense(
         user_id=current_user.id,
         category_id=request.category_id,
@@ -84,7 +94,18 @@ def update_expense(
         raise HTTPException(status_code=404, detail="Expense not found")
 
     if request.category_id is not None:
-        expense.category_id = request.category_id #type: ignore[reportCallIssue]
+        category = db.query(Category).filter(
+        Category.id == request.category_id,
+        Category.user_id == current_user.id
+    ).first()
+
+    if not category:
+        raise HTTPException(
+            status_code=404,
+            detail="Category not found"
+        )
+    
+    expense.category_id = request.category_id #type: ignore[reportCallIssue]
 
     if request.amount is not None:
         expense.amount = request.amount #type: ignore[reportCallIssue]
