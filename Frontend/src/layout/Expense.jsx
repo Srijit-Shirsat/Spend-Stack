@@ -5,9 +5,11 @@ import { getCategories, createCategory } from "../api/category";
 
 function Expenses() {
   const [showForm, setShowForm] = useState(false);
+  const [expenses, setExpenses] = useState([]);
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [categoryName, setCategoryName] = useState("");
   const [categoryColor, setCategoryColor] = useState("#14b8a6");
   const [title, setTitle] = useState("");
@@ -19,6 +21,7 @@ function Expenses() {
     try {
       const data = await getExpenses();
       console.log("Expenses:", data);
+      setExpenses(data);
     } catch (error) {
       console.error("Failed to fetch expenses:", error);
     }
@@ -51,6 +54,7 @@ const handleCreateExpense = async (e) => {
     });
 
     console.log("Expense created:", newExpense);
+    setExpenses((prev) => [...prev, newExpense]);
 
     setCategoryId("");
     setTitle("");
@@ -85,6 +89,13 @@ const handleCreateCategory = async () => {
   }
 };
 
+const filteredExpenses =
+  selectedCategory === "all"
+    ? expenses
+    : expenses.filter(
+        (expense) => expense.category_id === Number(selectedCategory)
+      );
+
   return (
     <>
       <h1 className="text-4xl font-bold text-white mb-6">
@@ -98,6 +109,33 @@ const handleCreateCategory = async () => {
         className="bg-teal-600 px-4 py-3 rounded-xl text-white mb-6">
           + Add Expense
         </button>
+
+        <div className="flex flex-wrap gap-3 mb-6">
+          <button
+            onClick={() => setSelectedCategory("all")}
+            className={`px-4 py-2 rounded-xl font-medium transition ${
+              selectedCategory === "all"
+              ? "bg-teal-600 text-white"
+              : "bg-zinc-800 text-zinc-400 hover:text-white"
+            }`}
+          >
+            All
+          </button>
+
+          {categories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => setSelectedCategory(category.id)}
+            className={`px-4 py-2 rounded-xl font-medium transition ${
+              selectedCategory === category.id
+              ? "bg-teal-600 text-white"
+              : "bg-zinc-800 text-zinc-400 hover:text-white"
+            }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
 
               {showForm && (
         <form
@@ -202,19 +240,43 @@ const handleCreateCategory = async () => {
 
         <table className="w-full text-white">
           <thead>
-            <tr>
-              <th className="text-left">Category</th>
-              <th className="text-left">Amount</th>
-              <th className="text-left">Date</th>
+            <tr className="border-b border-zinc-700">
+              <th className="pb-4 text-zinc-400 text-left">Category</th>
+              <th className="pb-4 text-zinc-400 text-left">Title</th>
+              <th className="pb-4 text-zinc-400 text-left">Amount</th>
+              <th className="pb-4 text-zinc-400 text-left">Date</th>
+              <th className="pb-4 text-zinc-400 text-left">Notes</th>
             </tr>
           </thead>
 
           <tbody>
-            <tr>
-              <td>Food</td>
-              <td>₹350</td>
-              <td>23 Jun</td>
-            </tr>
+            {filteredExpenses.map((expense) => (
+              <tr
+                key={expense.id}
+                className="border-b border-zinc-800"
+              >
+                <td className="py-4 text-white">
+                  {categories.find(
+                  (category) => category.id === expense.category_id)?.name || "Unknown"}
+                </td>
+
+                <td className="py-4 text-white">
+                  {expense.title}
+                </td>
+
+                <td className="py-4 text-white">
+                  ₹{expense.amount}
+                </td>
+
+                <td className="py-4 text-zinc-400">
+                  {expense.expense_date}
+                </td>
+
+                <td className="py-4 text-zinc-400">
+                  {expense.notes || "—"}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
 
